@@ -1,0 +1,8 @@
+[package]
+name = "rusterizer"
+version = "0.1.0"
+authors = ["Nicolas Chataing <nicolas.chataing@ens.fr>"]
+edition = "2018"
+
+[dependencies]
+sfml = "0.14.0"
