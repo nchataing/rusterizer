@@ -1,5 +1,6 @@
-use sfml::graphics::{Color, CircleShape, Shape, RenderWindow, RenderTarget, Transformable};
+use sfml::graphics::{Color, Vertex, VertexArray, PrimitiveType, RenderWindow, RenderTarget};
 use crate::mesh::Mesh;
+use crate::camera::Camera;
 use crate::vector::*;
 use crate::matrix::*;
 use std::f32::consts::PI;
@@ -18,32 +19,41 @@ pub fn project(pt: Vector3) -> Vector3 {
     )
 }
 
-pub fn render_mesh(window: &mut RenderWindow, mesh: &Mesh) -> () {
+pub fn render_mesh(window: &mut RenderWindow, mesh: &Mesh, cam: &Camera) {
     
     window.clear(&Color::BLACK);
-    // Create a dot for drawing
-    let mut dot = CircleShape::new(4.0,4);
-    dot.set_fill_color(&Color::GREEN);
-    dot.set_outline_color(&Color::GREEN);
-    dot.set_outline_thickness(0.);
-     
+    
+    // Create a VertexArray for drawing
+    let nb_tris = mesh.faces.len();
+    let mut vertex_array = VertexArray::new(PrimitiveType::Lines, 3*nb_tris);
+
     let size_u = window.size();
     let size_x = size_u.x as f32;
     let size_y = size_u.y as f32;
     
     // Process the object rotation matrix
-    let rot = mesh.get_rotation_mat(); 
+    let obj_mat = mesh.get_mat();
+    let cam_mat = cam.get_mat(); 
+    let proj_mat = Matrix::project(&cam); 
 
+    let m = proj_mat * cam_mat * obj_mat;
+
+    // Process the coordinates of each point
+    let mut proj_vert : Vec<(f32,f32)> = vec!();
+     
     for v in &mesh.vertices {
-        let v_obj = (&rot * (v.pt - mesh.rot_o)) + mesh.rot_o + mesh.translation;
-        let proj = project(v_obj);
-        if v_obj.z < 0. && proj.x >= -1. && proj.x <= 1. && proj.y >= -1. && proj.y <= 1. {
-            dot.set_position(
-            (
-                (1. + proj.x) * size_x / 2.,
-                (1. - proj.y) * size_y / 2.
-            ));
-            window.draw(&dot)
-        }
+        let proj = &m * v.pt; 
+        proj_vert.push(((1. + proj.x) * size_x / 2., (1. - proj.y) * size_y / 2.))
     }
+
+    for tri in &mesh.faces {
+        vertex_array.append(&Vertex::with_pos(proj_vert[tri.a]));
+        vertex_array.append(&Vertex::with_pos(proj_vert[tri.b]));
+        vertex_array.append(&Vertex::with_pos(proj_vert[tri.b]));
+        vertex_array.append(&Vertex::with_pos(proj_vert[tri.c]));
+        vertex_array.append(&Vertex::with_pos(proj_vert[tri.c]));
+        vertex_array.append(&Vertex::with_pos(proj_vert[tri.a]));
+    }
+
+    window.draw(&vertex_array)
 }

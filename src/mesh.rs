@@ -1,6 +1,7 @@
 
 use crate::vector::Vector3;
-use crate::matrix::*;
+use crate::matrix::Matrix;
+use crate::camera::Camera;
 use std::f64;
 
 use sfml::graphics::Color;
@@ -20,7 +21,6 @@ pub struct Face {
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
     pub faces: Vec<Face>,
-    pub rot_o: Vector3,
     rot_x: f32,
     rot_y: f32,
     rot_z: f32,
@@ -31,12 +31,12 @@ macro_rules! face {
     ($a:expr, $b:expr, $c:expr) => (Face { a: $a, b: $b, c: $c, color: None })
 }
 
+
 impl Mesh {
     pub fn new() -> Mesh {
         Mesh {
             vertices: Vec::new(),
             faces: Vec::new(),
-            rot_o: Vector3::zero(),
             rot_x: 0.,
             rot_y: 0.,
             rot_z: 0.,
@@ -60,15 +60,12 @@ impl Mesh {
         self.rot_z += theta
     }
     
-    pub fn set_rot_origin(&mut self, o: Vector3) {
-        self.rot_o = o
-    }
-
     pub fn set_translation(&mut self, t: Vector3) {
         self.translation = t
     }
 
-    pub fn get_rotation_mat(&self) -> Matrix {
-        rot(self.rot_x, self.rot_y, self.rot_z)
+    pub fn get_mat(&self) -> Matrix {
+        Matrix::rot_and_translate(self.rot_x, self.rot_y, self.rot_z, 
+                self.translation)
     }
 }
