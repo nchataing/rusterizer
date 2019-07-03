@@ -37,7 +37,7 @@ fn main() {
     // Rotate the mesh and translate it
     mesh.set_translation(Vector3::new(0.,0.,-10.));
     mesh.rot_x(-f32::consts::PI/2.);
-    
+
     let mut camera = Camera::new();
 
     let mut window = RenderWindow::new(
@@ -51,9 +51,9 @@ fn main() {
 
     let mut mx = 400;
     let mut my = 300;
-    
+
     window.set_mouse_position(&Vector2i::new(400,300));
-    
+
     println!("{} =? {}", f32::consts::PI/4., f32::atan(1.));
 
     loop {
@@ -64,7 +64,7 @@ fn main() {
                 _ => {}
             }
         }
-        
+
         let mp = window.mouse_position();
         let dx = (mp.x - mx) as f32;
         let dy = (mp.y - my) as f32;

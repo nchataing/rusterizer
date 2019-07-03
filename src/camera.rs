@@ -1,5 +1,5 @@
 use crate::vector::Vector3;
-use crate::matrix::Matrix;
+use crate::matrix::Matrix4;
 
 pub struct Camera {
     pub translation: Vector3,
@@ -27,11 +27,11 @@ impl Camera {
     pub fn rot_x(&mut self, t: f32) {
         self.rot_x += t
     }
-    
+
     pub fn rot_y(&mut self, t: f32) {
         self.rot_y += t
     }
-    
+
     pub fn rot_z(&mut self, t: f32) {
         self.rot_z += t
     }
@@ -40,7 +40,7 @@ impl Camera {
         self.translation = self.translation + vec
     }
 
-    pub fn get_mat(&self) -> Matrix {
-        Matrix::rot_and_translate(self.rot_x, self.rot_y, self.rot_z, self.translation)
+    pub fn get_mat(&self) -> Matrix4 {
+        Matrix4::rot_and_translate(self.rot_x, self.rot_y, self.rot_z, self.translation)
     }
 }

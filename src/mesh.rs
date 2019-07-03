@@ -1,6 +1,6 @@
 
 use crate::vector::Vector3;
-use crate::matrix::Matrix;
+use crate::matrix::Matrix4;
 use crate::camera::Camera;
 use std::f64;
 
@@ -51,7 +51,7 @@ impl Mesh {
     pub fn rot_x(&mut self, theta: f32) {
         self.rot_x += theta
     }
-    
+
     pub fn rot_y(&mut self, theta: f32) {
         self.rot_y += theta
     }
@@ -59,13 +59,13 @@ impl Mesh {
     pub fn rot_z(&mut self, theta: f32) {
         self.rot_z += theta
     }
-    
+
     pub fn set_translation(&mut self, t: Vector3) {
         self.translation = t
     }
 
-    pub fn get_mat(&self) -> Matrix {
-        Matrix::rot_and_translate(self.rot_x, self.rot_y, self.rot_z, 
+    pub fn get_mat(&self) -> Matrix4 {
+        Matrix4::rot_and_translate(self.rot_x, self.rot_y, self.rot_z,
                 self.translation)
     }
 }
