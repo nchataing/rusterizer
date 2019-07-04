@@ -25,6 +25,10 @@ macro_rules! matrix {
 
 impl Matrix4 {
 
+    pub fn zero() -> Matrix4 {
+        matrix![0.]
+    }
+
     pub fn identity() -> Matrix4 {
         matrix![
             1., 0., 0., 0.;
@@ -39,7 +43,7 @@ impl Matrix4 {
             1., 0.,      0.,       0.;
             0., t.cos(), -t.sin(), 0.;
             0., t.sin(), t.cos(),  0.;
-            0., 0.,      0.,       0.
+            0., 0.,      0.,       1.
         ]
     }
 
@@ -48,7 +52,7 @@ impl Matrix4 {
             t.cos(), -t.sin(), 0., 0.;
             t.sin(), t.cos(),  0., 0.;
             0.,      0.,       1., 0.;
-            0.,      0.,       0., 0.
+            0.,      0.,       0., 1.
         ]
     }
 
@@ -57,7 +61,7 @@ impl Matrix4 {
             t.cos(),  0., t.sin(), 0.;
             0.,       1., 0.,      0.;
             -t.sin(), 0., t.cos(), 0.;
-            0.,       0., 0.,      0.
+            0.,       0., 0.,      1.
         ]
     }
 
@@ -76,6 +80,7 @@ impl Matrix4 {
 
     pub fn rot_and_translate(t_x:f32, t_y:f32, t_z:f32, v: Vector3) -> Matrix4 {
         let mut out = Matrix4::rot(t_x, t_y, t_z);
+
         out.cells[0][3] = v.x;
         out.cells[1][3] = v.y;
         out.cells[2][3] = v.z;
@@ -99,12 +104,12 @@ impl Matrix4 {
 impl Mul<Matrix4> for Matrix4 {
     type Output = Matrix4;
 
-    fn mul(self, other: Matrix4) -> Matrix4{
-        let mut out = Matrix4::identity();
+    fn mul(self, other: Matrix4) -> Matrix4 {
+        let mut out = Matrix4::zero();
 
-        for i in 0..3{
-            for j in 0..3 {
-                for k in 0..3 {
+        for i in 0..4 {
+            for j in 0..4 {
+                for k in 0..4 {
                     out.cells[i][j] += self.cells[i][k] * other.cells[k][j];
                 }
             }

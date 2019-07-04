@@ -35,11 +35,10 @@ fn main() {
     }
 
     // Rotate the mesh and translate it
-    mesh.set_translation(Vector3::new(0.,0.,-10.));
+    mesh.translate(Vector3::new(0.,0.,-2.));
     mesh.rot_x(-f32::consts::PI/2.);
 
     let mut camera = Camera::new();
-
     let mut window = RenderWindow::new(
         (800,600),
         "Dot",

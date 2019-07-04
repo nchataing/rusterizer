@@ -60,12 +60,12 @@ impl Mesh {
         self.rot_z += theta
     }
 
-    pub fn set_translation(&mut self, t: Vector3) {
-        self.translation = t
+    pub fn translate(&mut self, vec: Vector3) {
+        self.translation = self.translation + vec
     }
 
     pub fn get_mat(&self) -> Matrix4 {
         Matrix4::rot_and_translate(self.rot_x, self.rot_y, self.rot_z,
-                self.translation)
+            self.translation)
     }
 }
