@@ -11,7 +11,7 @@ mod camera;
 use io::off::import;
 use std::fs::File;
 
-use sfml::graphics::RenderWindow;
+use sfml::graphics::{RenderWindow, RenderTarget};
 use sfml::window::{Event, Key, Style};
 use sfml::system::Vector2i;
 
@@ -48,6 +48,9 @@ fn main() {
     window.set_vertical_sync_enabled(true);
     window.set_framerate_limit(60);
 
+    // Create empty Z-buffer
+    let mut zbuf = vec![std::f32::MIN; (window.size().x * window.size().y) as usize];
+
     let mut mx = 400;
     let mut my = 300;
 
@@ -73,7 +76,7 @@ fn main() {
         //camera.rot_z(dx/20.);
         //camera.rot_x(dy/20.);
 
-        render_mesh(&mut window, &mesh, &camera);
+        render_raster(&mut window, &mut zbuf, &mesh, &camera);
         window.display();
         mesh.rot_y(f32::consts::PI/180.)
     }

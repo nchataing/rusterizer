@@ -26,6 +26,12 @@ impl Vector3 {
         Vector3 { x: v, y: v, z: v }
     }
 
+    pub fn normal(a: &Vector3, b: &Vector3, c: &Vector3) -> Vector3 {
+        let ab = b - a;
+        let ac = c - a;
+        ab.cross(&ac).normalize()
+    }
+
     pub fn coord_system(&self) -> (Vector3, Vector3) {
         let nt = if self.y.abs() < self.x.abs() {
             Vector3 { x: self.z, y: 0., z: -self.x }.normalize()
@@ -82,6 +88,18 @@ impl Sub for Vector3 {
     type Output = Vector3;
 
     fn sub(self, other: Vector3) -> Vector3 {
+        Vector3 {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }
+}
+
+impl Sub for &Vector3 {
+    type Output = Vector3;
+
+    fn sub(self, other: &Vector3) -> Vector3 {
         Vector3 {
             x: self.x - other.x,
             y: self.y - other.y,
