@@ -58,13 +58,22 @@ fn main() {
 
     println!("{} =? {}", f32::consts::PI/4., f32::atan(1.));
 
+    let mut paused = false;
+    let mut mouse_left = false;
+
     loop {
         while let Some(event) = window.poll_event() {
             match event {
                 Event::Closed | Event::KeyPressed { code : Key::Escape, .. }
                     => return,
+                Event::KeyPressed { code: Key::Space, .. } =>
+                    paused = !paused,
                 _ => {}
             }
+        }
+
+        if paused {
+            continue
         }
 
         let mp = window.mouse_position();
