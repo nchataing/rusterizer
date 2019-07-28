@@ -90,8 +90,10 @@ impl Matrix4 {
     pub fn project(cam: &Camera) -> Matrix4 {
         let f = cam.far;
         let n = cam.near;
-        let s = 1. / f32::tan(cam.fov * PI / (360.));
+        let s = 1. / f32::tan(cam.fov * PI / 360.);
 
+        // After perspective divide (vector /z), the depth coodinate z
+        // is remapped to (near => 0), (far => 1)
         matrix![
             s,  0., 0.,      0.;
             0., s,  0.,      0.;
@@ -120,17 +122,15 @@ impl Mul<Matrix4> for Matrix4 {
 }
 
 impl Mul<Vector3> for &Matrix4{
-    type Output = Vector3;
+    type Output = (Vector3, f32);
 
-    fn mul(self, v: Vector3) -> Vector3 {
+    fn mul(self, v: Vector3) -> (Vector3, f32) {
         let w = v.x * self.cells[3][0] + v.y * self.cells[3][1] + v.z * self.cells[3][2] + self.cells[3][3];
-
-        let not_norm = Vector3 {
+        let p = Vector3 {
             x: v.x * self.cells[0][0] + v.y * self.cells[0][1] + v.z * self.cells[0][2] + self.cells[0][3],
             y: v.x * self.cells[1][0] + v.y * self.cells[1][1] + v.z * self.cells[1][2] + self.cells[1][3],
             z: v.x * self.cells[2][0] + v.y * self.cells[2][1] + v.z * self.cells[2][2] + self.cells[2][3],
         };
-
-        not_norm / w
+        (p, w)
     }
 }

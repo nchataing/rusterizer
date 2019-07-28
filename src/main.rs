@@ -85,6 +85,11 @@ fn main() {
         //camera.rot_z(dx/20.);
         //camera.rot_x(dy/20.);
 
+        // Clear the Z-buffer
+        for c in zbuf.iter_mut() {
+            *c = std::f32::MAX;
+        }
+
         render_raster(&mut window, &mut zbuf, &mesh, &camera);
         window.display();
         mesh.rot_y(f32::consts::PI/180.)

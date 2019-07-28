@@ -6,132 +6,46 @@ use crate::vector::*;
 use crate::matrix::*;
 use std::f32::consts::PI;
 use std::f32;
-use std::cmp::Ordering;
 
-pub fn project(pt: Vector3) -> Vector3 {
-    let fov = 90.;
-    let near = 0.1;
-    let far = 20.;
-    let scale = 1. / f32::tan(fov * PI / (360.));
+pub fn fill_triangle(window: &RenderWindow, points: &mut VertexArray, zbuf: &mut Vec<f32>,
+                     va: Vector3, vb: Vector3, vc: Vector3, color: Color) {
 
-    Vector3::new(
-        -scale * pt.x / pt.z,
-        -scale * pt.y / pt.z,
-        far * (1. - near / pt.z) / (far - near)
-    )
-}
+    fn edge_function(a: &Vector3, b: &Vector3, c: &Vector3) -> f32 {
+        (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)
+    }
 
-pub fn put_pixel(window: &RenderWindow,
-                 points: &mut VertexArray,
-                 zbuf: &mut Vec<f32>,
-                 x: f32, y: f32, z: f32,
-                 color: Color) {
-    if x < 0. || x as u32 >= window.size().x {
+    let x0 = va.x.min(vb.x).min(vc.x).max(0.);
+    let x1 = va.x.max(vb.x).max(vc.x).min((window.size().x - 1) as f32);
+    let y0 = va.y.min(vb.y).min(vc.y).max(0.);
+    let y1 = va.y.max(vb.y).max(vc.y).min((window.size().y - 1) as f32);
+    let area = edge_function(&va, &vb, &vc);
+    if area == 0. {
         return;
     }
 
-    let off = y as usize * window.size().x as usize+ x as usize;
-    if zbuf[off] > z {
-        points.append(&Vertex::with_pos_color((x, y), color));
-        zbuf[off as usize] = z;
-    }
-}
+    let za = 1. / va.z;
+    let zb = 1. / vb.z;
+    let zc = 1. / vc.z;
 
-pub fn fill_line(window: &RenderWindow,
-                 points: &mut VertexArray,
-                 zbuf: &mut Vec<f32>,
-                 xs: f32, zs: f32, xe: f32, ze: f32, y: f32,
-                 color: Color) {
-    if y < 0. || y as u32 >= window.size().y {
-        return;
-    }
-
-    let dz = if xs != xe { (ze - zs) / (xe - xs) } else { 0. };
-    let mut x = xs;
-    let mut z = zs;
-    while x <= xe {
-        x += 1.;
-        z += dz;
-        put_pixel(window, points, zbuf, x, y, z, color);
-    }
-}
-
-pub fn fill_triangle(window: &RenderWindow,
-                     points: &mut VertexArray,
-                     zbuf: &mut Vec<f32>,
-                     va: Vector3,
-                     vb: Vector3,
-                     vc: Vector3,
-                     color: Color) {
-
-    let mut vs = [va, vb, vc];
-    vs.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap_or(Ordering::Equal));
-    let [a, b, c] = vs;
-
-    let (dx1, dz1) =
-        if b.y > a.y {
-            ((b.x - a.x) / (b.y - a.y),
-             (b.z - a.z) / (b.y - a.y))
-        } else {
-            (0., 0.)
-        };
-    let (dx2, dz2) =
-        if c.y > a.y {
-            ((c.x - a.x) / (c.y - a.y),
-             (c.z - a.z) / (c.y - a.y))
-        } else {
-            (0., 0.)
-        };
-    let (dx3, dz3) =
-        if c.y > b.y {
-            ((c.x - b.x) / (c.y - b.y),
-             (c.z - b.z) / (c.y - b.y))
-        } else {
-            (0., 0.)
-        };
-
-    let mut xs = a.x;
-    let mut zs = a.z;
-    let mut xe = a.x;
-    let mut ze = a.z;
-    let mut y = a.y;
-
-    if dx1 > dx2 {
-        while y <= b.y {
-            fill_line(window, points, zbuf, xs, zs, xe, ze, y, color);
-            xs += dx2;
-            zs += dz2;
-            xe += dx1;
-            ze += dz1;
-            y += 1.;
+    let mut p = Vector3::new(0., y0.floor(), 0.);
+    while p.y <= y1.ceil() {
+        p.x = x0.floor();
+        while p.x <= x1.ceil() {
+            let wc = edge_function(&va, &vb, &p);
+            let wa = edge_function(&vb, &vc, &p);
+            let wb = edge_function(&vc, &va, &p);
+            let inside = wa >= 0. && wb >= 0. && wc >= 0.;
+            if inside {
+                let z = area / (wa * za + wb * zb + wc * zc);
+                let off = p.y as usize * window.size().x as usize + p.x as usize;
+                if zbuf[off] > z {
+                    points.append(&Vertex::with_pos_color((p.x, p.y), color));
+                    zbuf[off as usize] = z;
+                }
+            }
+            p.x = p.x + 1.;
         }
-        xe = b.x;
-        while y <= c.y {
-            fill_line(window, points, zbuf, xs, zs, xe, ze, y, color);
-            xs += dx2;
-            zs += dz2;
-            xe += dx3;
-            ze += dz3;
-            y += 1.;
-        }
-    } else {
-        while y <= b.y {
-            fill_line(window, points, zbuf, xs, zs, xe, ze, y, color);
-            xs += dx1;
-            zs += dz1;
-            xe += dx2;
-            ze += dz2;
-            y += 1.;
-        }
-        xs = b.x;
-        while y <= c.y {
-            fill_line(window, points, zbuf, xs, zs, xe, ze, y, color);
-            xs += dx3;
-            zs += dz3;
-            xe += dx2;
-            ze += dz2;
-            y += 1.;
-        }
+        p.y = p.y + 1.;
     }
 }
 
@@ -142,11 +56,6 @@ pub fn render_raster(window: &mut RenderWindow, zbuf: &mut Vec<f32>, mesh: &Mesh
     let size_x = size_u.x as f32;
     let size_y = size_u.y as f32;
 
-    // Clear the Z-buffer
-    for c in zbuf.iter_mut() {
-        *c = std::f32::MAX;
-    }
-
     // Process the object rotation matrix
     let obj_mat = mesh.get_mat();
     let cam_mat = cam.get_mat();
@@ -154,27 +63,41 @@ pub fn render_raster(window: &mut RenderWindow, zbuf: &mut Vec<f32>, mesh: &Mesh
     let m = proj_mat * cam_mat * obj_mat;
 
     // Process the coordinates of each point
-    let mut proj_vert : Vec<Vector3> = vec!();
+    let mut cam_vertices : Vec<Vector3> = vec!();
+    let mut scr_vertices : Vec<Vector3> = vec!();
+
     for v in &mesh.vertices {
-        let mut proj = &m * v.pt;
-        proj.x = (1. + proj.x) * size_x / 2.;
-        proj.y = (1. - proj.y) * size_y / 2.;
-        proj_vert.push(proj);
+        let (mut p, w) = &m * v.pt;
+        // Perspective divide.
+        p = p / w;
+        cam_vertices.push(p);
+        // To screen coordinates.
+        p.x = (1. + p.x) * size_x / 2.;
+        p.y = (1. - p.y) * size_y / 2.;
+        scr_vertices.push(p);
     }
 
     for tri in &mesh.faces {
-        let norm = Vector3::normal(&mesh.vertices[tri.a].pt,
+        let normal_col = Vector3::normal(&mesh.vertices[tri.a].pt,
             &mesh.vertices[tri.b].pt, &mesh.vertices[tri.c].pt);
         let color = Color::rgb(
-            ((1. + norm.x) * 128.) as u8,
-            ((1. + norm.y) * 128.) as u8,
-            ((1. + norm.z.abs()) * 128.) as u8);
-        fill_triangle(window, &mut points, zbuf,
-            proj_vert[tri.a], proj_vert[tri.b], proj_vert[tri.c], color)
+            ((1. + normal_col.x) * 128.) as u8,
+            ((1. + normal_col.y) * 128.) as u8,
+            ((1. + normal_col.z.abs()) * 128.) as u8);
+
+        let normal = Vector3::normal(&cam_vertices[tri.a],
+            &cam_vertices[tri.b], &cam_vertices[tri.c]);
+        if normal.z >= 0. {
+            fill_triangle(window, &mut points, zbuf,
+                scr_vertices[tri.a], scr_vertices[tri.b], scr_vertices[tri.c], color);
+        } else {
+            fill_triangle(window, &mut points, zbuf,
+                scr_vertices[tri.a], scr_vertices[tri.c], scr_vertices[tri.b], color);
+        }
     }
 
     window.clear(&Color::BLACK);
-    window.draw(&points)
+    window.draw(&points);
 }
 
 pub fn render_wireframe(window: &mut RenderWindow, mesh: &Mesh, cam: &Camera) {
@@ -200,8 +123,10 @@ pub fn render_wireframe(window: &mut RenderWindow, mesh: &Mesh, cam: &Camera) {
     let mut proj_vert : Vec<(f32,f32)> = vec!();
 
     for v in &mesh.vertices {
-        let proj = &m * v.pt;
-        proj_vert.push(((1. + proj.x) * size_x / 2., (1. - proj.y) * size_y / 2.))
+        let (p, w) = &m * v.pt;
+        let px = p.x / w;
+        let py = p.y / w;
+        proj_vert.push(((1. + px) * size_x / 2., (1. - py) * size_y / 2.))
     }
 
     for tri in &mesh.faces {
