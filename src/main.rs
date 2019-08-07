@@ -10,9 +10,10 @@ mod camera;
 
 use io::off::import;
 use std::fs::File;
+use std::env;
 
 use sfml::graphics::{RenderWindow, RenderTarget};
-use sfml::window::{Event, Key, mouse::Button, Style};
+use sfml::window::{Event, Key, mouse::Button, Style, mouse::Wheel};
 use sfml::system::Vector2i;
 
 use renderer::*;
@@ -23,14 +24,23 @@ use vector::Vector3;
 use std::f32;
 
 fn main() {
+    
+    let args: Vec<_> = env::args().collect();
+    let mut mesh_file = "";
+
+    if args.len() == 1 {
+        print!("Expected OBJ file path as argument\n");
+        return;
+    } else {
+        mesh_file = &args[1]
+    }
 
     let mut mesh = Mesh::new();
-    let mesh_file = "objects/space_station.off";
     let mut file = File::open(mesh_file).unwrap();
 
     let res = import(&mut file, &mut mesh);
     if res == None {
-        eprint!("Failed to import mesh from file {}", mesh_file);
+        eprint!("Failed to import mesh from file {}\n", mesh_file);
         return;
     }
 
@@ -74,7 +84,9 @@ fn main() {
                 },
                 Event::MouseButtonReleased { button: Button::Left, .. } =>
                     rotate = false,
-                _ => {}
+                Event::MouseWheelScrolled {wheel: Wheel::Vertical, delta, ..} => 
+                    mesh.translate(Vector3::new(0.,0.,delta)),
+                _ => {},
             }
         }
 
