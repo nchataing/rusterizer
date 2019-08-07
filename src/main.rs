@@ -57,7 +57,8 @@ fn main() {
 
     let mut paused = false;
     let mut mouse_left = false;
-    let mut start_coords = None;
+    let mut rotate = false;
+    let mut prev_mp = Vector2i::new(0, 0);
 
     loop {
         while let Some(event) = window.poll_event() {
@@ -66,10 +67,13 @@ fn main() {
                     return,
                 Event::KeyPressed { code: Key::Space, .. } =>
                     paused = !paused,
-                Event::MouseButtonPressed { button: Button::Left, x, y } =>
-                    start_coords = Some ((x as f32, y as f32)),
+                Event::MouseButtonPressed { button: Button::Left, x, y } => {
+                    prev_mp.x = x;
+                    prev_mp.y = y;
+                    rotate = true
+                },
                 Event::MouseButtonReleased { button: Button::Left, .. } =>
-                    start_coords = None,
+                    rotate = false,
                 _ => {}
             }
         }
@@ -78,13 +82,11 @@ fn main() {
             continue
         }
 
-        match start_coords {
-            Some ((sx, sy)) => {
-                let mp = window.mouse_position();
-                mesh.rot_y((mp.x as f32 - sx) * 0.001);
-                mesh.rot_x((mp.y as f32 - sy) * 0.001);
-            },
-            _ => {}
+        if rotate {
+            let mp = window.mouse_position();
+            mesh.rot_y((mp.x - prev_mp.x) as f32 * 0.005);
+            mesh.rot_x((mp.y - prev_mp.y) as f32 * 0.005);
+            prev_mp = mp
         }
 
         // Clear the Z-buffer.
