@@ -4,6 +4,7 @@ use crate::mesh::Mesh;
 use crate::camera::Camera;
 use crate::vector::*;
 use crate::matrix::*;
+use crate::light::Light;
 use std::f32::consts::PI;
 use std::f32;
 
@@ -38,7 +39,7 @@ pub fn fill_triangle(window: &RenderWindow, points: &mut VertexArray, zbuf: &mut
             if inside {
                 let z = area / (wa * za + wb * zb + wc * zc);
                 let off = p.y as usize * window.size().x as usize + p.x as usize;
-                if zbuf[off] > z {
+                    if zbuf[off] > z && z >= -1.2 && z <= -1.{
                     points.append(&Vertex::with_pos_color((p.x, p.y), color));
                     zbuf[off as usize] = z;
                 }
@@ -49,7 +50,7 @@ pub fn fill_triangle(window: &RenderWindow, points: &mut VertexArray, zbuf: &mut
     }
 }
 
-pub fn render_raster(window: &mut RenderWindow, zbuf: &mut Vec<f32>, mesh: &Mesh, cam: &Camera) {
+pub fn render_normal(window: &mut RenderWindow, zbuf: &mut Vec<f32>, mesh: &Mesh, cam: &Camera) {
     let mut points = VertexArray::new(PrimitiveType::Points, 0);
 
     let size_u = window.size();
@@ -98,6 +99,63 @@ pub fn render_raster(window: &mut RenderWindow, zbuf: &mut Vec<f32>, mesh: &Mesh
 
     window.clear(&Color::BLACK);
     window.draw(&points);
+}
+
+pub fn render_shadow(window: &mut RenderWindow, zbuf: &mut Vec<f32>, mesh: &Mesh, 
+                     cam: &Camera, light: &Light) {
+
+    let mut points = VertexArray::new(PrimitiveType::Points, 0);
+
+    let size_u = window.size();
+    let size_x = size_u.x as f32;
+    let size_y = size_u.y as f32;
+
+    // Process the object rotation matrix
+    let obj_mat = mesh.get_mat();
+    let cam_mat = cam.get_mat();
+    let proj_mat = Matrix4::project(&cam);
+    let m = proj_mat * cam_mat;
+    
+    // Process the coordinates of each point
+    let mut obj_vertices : Vec<Vector3> = vec!();
+    let mut cam_vertices : Vec<Vector3> = vec!();
+    let mut scr_vertices : Vec<Vector3> = vec!();
+
+    for v in &mesh.vertices {
+        let (obj_pt, _) = &obj_mat * v.pt;
+        obj_vertices.push(obj_pt);
+        let (mut p, w) = &m * obj_pt;
+        // Perspective divide.
+        p = p / w;
+        cam_vertices.push(p);
+        // To screen coordinates.
+        p.x = (1. + p.x) * size_x / 2.;
+        p.y = (1. - p.y) * size_y / 2.;
+        scr_vertices.push(p);
+    }
+
+    for tri in &mesh.faces {
+        let normal_col = Vector3::normal(&obj_vertices[tri.a],
+            &obj_vertices[tri.b], &obj_vertices[tri.c]);
+        let mut shading = -light.dir.dot(&normal_col);
+        let gray = ((1. + shading) * 128.) as u8;
+        let color = Color::rgb(gray, gray, gray);
+
+        let normal = Vector3::normal(&cam_vertices[tri.a],
+            &cam_vertices[tri.b], &cam_vertices[tri.c]);
+        if normal.z >= 0. {
+            fill_triangle(window, &mut points, zbuf,
+                scr_vertices[tri.a], scr_vertices[tri.b], scr_vertices[tri.c], color);
+        } else {
+            fill_triangle(window, &mut points, zbuf,
+                scr_vertices[tri.a], scr_vertices[tri.c], scr_vertices[tri.b], color);
+        }
+    }
+
+    window.clear(&Color::BLACK);
+    window.draw(&points);
+
+    
 }
 
 pub fn render_wireframe(window: &mut RenderWindow, mesh: &Mesh, cam: &Camera) {

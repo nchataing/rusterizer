@@ -7,6 +7,7 @@ mod renderer;
 mod vector;
 mod matrix;
 mod camera;
+mod light;
 
 use io::off::import;
 use std::fs::File;
@@ -20,6 +21,7 @@ use renderer::*;
 use mesh::*;
 use camera::Camera;
 use vector::Vector3;
+use light::Light;
 
 use std::f32;
 
@@ -61,6 +63,8 @@ fn main() {
     window.set_vertical_sync_enabled(true);
     window.set_framerate_limit(60);
     window.set_mouse_position(&Vector2i::new(width as i32 / 2, height as i32 / 2));
+    
+    let light = Light::new(1.,-1.,-1.);
 
     // Create empty Z-buffer
     let mut zbuf = vec![std::f32::MIN; (width * height) as usize];
@@ -106,7 +110,7 @@ fn main() {
             *c = std::f32::MAX;
         }
 
-        render_raster(&mut window, &mut zbuf, &mesh, &camera);
+        render_shadow(&mut window, &mut zbuf, &mesh, &camera, &light);
         window.display();
     }
 }

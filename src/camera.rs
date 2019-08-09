@@ -39,7 +39,12 @@ impl Camera {
     pub fn translate(&mut self, vec: Vector3) {
         self.translation = self.translation + vec
     }
-
+    
+    pub fn get_direction(&self) -> Vector3 {
+        let (v,w) = &self.get_mat() * Vector3::new(0.,0.,1.);
+        v.normalize()
+    }
+    
     pub fn get_mat(&self) -> Matrix4 {
         Matrix4::rot_and_translate(self.rot_x, self.rot_y, self.rot_z, self.translation)
     }
