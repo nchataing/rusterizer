@@ -26,7 +26,7 @@ use light::Light;
 use std::f32;
 
 fn main() {
-    
+
     let args: Vec<_> = env::args().collect();
     let mut mesh_file = "";
 
@@ -63,11 +63,11 @@ fn main() {
     window.set_vertical_sync_enabled(true);
     window.set_framerate_limit(60);
     window.set_mouse_position(&Vector2i::new(width as i32 / 2, height as i32 / 2));
-    
+
     let light = Light::new(1.,-1.,-1.);
 
     // Create empty Z-buffer
-    let mut zbuf = vec![std::f32::MIN; (width * height) as usize];
+    let mut zbuf = vec![std::f32::MAX; (width * height) as usize];
 
     let mut paused = false;
     let mut mouse_left = false;
@@ -88,7 +88,7 @@ fn main() {
                 },
                 Event::MouseButtonReleased { button: Button::Left, .. } =>
                     rotate = false,
-                Event::MouseWheelScrolled {wheel: Wheel::Vertical, delta, ..} => 
+                Event::MouseWheelScrolled {wheel: Wheel::Vertical, delta, ..} =>
                     mesh.translate(Vector3::new(0.,0.,delta)),
                 _ => {},
             }

@@ -95,10 +95,10 @@ impl Matrix4 {
         // After perspective divide (vector /z), the depth coodinate z
         // is remapped to (near => 0), (far => 1)
         matrix![
-            s,  0., 0.,      0.;
-            0., s,  0.,      0.;
-            0., 0., f/(f-n), -f*n/(f-n);
-            0., 0., -1.,     0.
+            s,  0., 0.,           0.;
+            0., s,  0.,           0.;
+            0., 0., -(f+n)/(f-n), -2.*f*n/(f-n);
+            0., 0., -1.,          0.
         ]
     }
 }

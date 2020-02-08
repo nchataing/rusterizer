@@ -11,6 +11,13 @@ use std::f32;
 pub fn fill_triangle(window: &RenderWindow, points: &mut VertexArray, zbuf: &mut Vec<f32>,
                      va: Vector3, vb: Vector3, vc: Vector3, color: Color) {
 
+    // Near and far plane clipping : no need to run through the procedure is the
+    // triangle is fully outside the field of view.
+    if (va.z > 1. && vb.z > 1. && vc.z > 1.) ||
+       (va.z < -1. && vb.z < -1. && vc.z < -1.) {
+        return;
+    }
+
     fn edge_function(a: &Vector3, b: &Vector3, c: &Vector3) -> f32 {
         (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)
     }
@@ -39,9 +46,9 @@ pub fn fill_triangle(window: &RenderWindow, points: &mut VertexArray, zbuf: &mut
             if inside {
                 let z = area / (wa * za + wb * zb + wc * zc);
                 let off = p.y as usize * window.size().x as usize + p.x as usize;
-                    if zbuf[off] > z && z >= -1.2 && z <= -1.{
+                if zbuf[off] > z && z > -1. && z < 1. {
                     points.append(&Vertex::with_pos_color((p.x, p.y), color));
-                    zbuf[off as usize] = z;
+                    zbuf[off] = z;
                 }
             }
             p.x = p.x + 1.;
